@@ -1,0 +1,14 @@
+# .gitignore
+.env
+.venv/
+__pycache__/
+
+# python
+__pycache__/
+*.py[cod]
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+

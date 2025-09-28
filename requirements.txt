@@ -1,0 +1,4 @@
+fastapi[standard]==0.113.0
+sqlalchemy
+psycopg2-binary
+pytest
