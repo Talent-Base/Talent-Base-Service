@@ -1,5 +1,5 @@
 from pydantic import BaseModel
 
-class Candidato(BaseModel):
+class UserBase(BaseModel):
     name: str
     email: str
