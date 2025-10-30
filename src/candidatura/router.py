@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException, Depends, Response, status
 from sqlalchemy.orm import Session
 
 from ..database import engine, Base, getDatabase
@@ -22,6 +22,8 @@ async def getCandidatura(database: Session = Depends(getDatabase)):
 @router.get("/{id_candidatura}")
 async def getCandidaturaById(id_candidatura: int, database: Session = Depends(getDatabase)):
     candidatura = CandidaturaRepository.getCandidaturaById(id_candidatura, database)
+    if candidatura is None:
+        raise HTTPException(status_code=404, detail="Candidatura not found")
     return candidatura
 
 @router.post("/")
@@ -32,20 +34,23 @@ async def createCandidatura(new_candidatura: CandidaturaBase, database: Session 
                 status_code=400,
                 detail="Candidatura already registered"
         )
-    else:
-        new_candidatura = CandidaturaRepository.createCandidatura(Candidatura(**new_candidatura.model_dump()), database)
-        return new_candidatura
+    new_candidatura = CandidaturaRepository.createCandidatura(Candidatura(**new_candidatura.model_dump()), database)
+    return new_candidatura
 
 @router.put("/{id_candidatura}")
 async def updateCandidaturaStatusById(id_candidatura: int, candidatura_status: str, database: Session = Depends(getDatabase)):
     candidatura = CandidaturaRepository.getCandidaturaById(id_candidatura, database)
-    if candidatura:
-        updated_candidatura = CandidaturaRepository.updateCandidatura(Candidatura(id_candidatura = id_candidatura, **candidatura.model_dump(), status = candidatura_status), database)
-        return updated_candidatura
+    if not candidatura:
+        raise HTTPException(status_code=404, detail="Candidatura não encontrada")
+    updated_candidatura = CandidaturaRepository.updateCandidatura(Candidatura(id_candidatura = id_candidatura, **candidatura.model_dump(), status = candidatura_status), database)
+    return updated_candidatura
 
 @router.delete("/{id_candidatura}")
 async def deleteCandidatura(id_candidatura: int, database: Session = Depends(getDatabase)):
     candidatura = CandidaturaRepository.getCandidaturaById(id_candidatura, database)
-    if candidatura:
-        response = CandidaturaRepository.deleteCandidatura(candidatura, database)
-        return response
+    if not candidatura:
+        raise HTTPException(status_code=404, detail="Candidatura not found")
+    success = CandidaturaRepository.deleteCandidatura(candidatura, database)
+    if not success:
+        raise HTTPException(status_code=500, detail="Erro ao deletar candidatura")
+    return Response(status_code = status.HTTP_204_NO_CONTENT)

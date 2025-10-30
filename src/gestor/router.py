@@ -4,7 +4,10 @@ from sqlalchemy.orm import Session
 from ..database import engine, Base, getDatabase
 from .repository import GestorRepository
 from .schema import GestorBase
-from ..models import Gestor
+from ..models import Gestor, VagaDeEmprego
+
+from ..vaga_de_emprego.repository import VagaDeEmpregoRepository
+from ..vaga_de_emprego.schema import VagaDeEmpregoBase
 
 Base.metadata.create_all(bind=engine)
 
@@ -64,3 +67,26 @@ async def deleteGestor(id_gestor: int, database: Session = Depends(getDatabase))
         )
     return Response(status_code = status.HTTP_204_NO_CONTENT)
     
+
+@router.post("/{id_gestor}/vaga_de_emprego")
+async def createVagaDeEmprego(id_gestor: int, vaga_de_emprego_data: VagaDeEmpregoBase, database: Session = Depends(getDatabase)):
+    new_vaga_de_emprego = VagaDeEmpregoRepository.createVagaDeEmprego(VagaDeEmprego(**vaga_de_emprego_data.model_dump()), database)
+    return new_vaga_de_emprego 
+
+@router.put("/{id_gestor}/vaga_de_emprego/{id_vaga_de_emprego}")
+async def updateVagaDeEmprego(id_gestor: int, id_vaga_de_emprego: int, vaga_de_emprego_data: VagaDeEmpregoBase, database: Session = Depends(getDatabase)):
+    vaga_de_emprego = VagaDeEmpregoRepository.getVagaDeEmpregoById(id_vaga_de_emprego, database)
+    if not vaga_de_emprego:
+        raise HTTPException(status_code=404, detail="Vaga de emprego não encontrada")
+    updated_vaga_de_emprego = VagaDeEmpregoRepository.updateVagaDeEmprego(VagaDeEmprego(id_vaga_de_emprego = id_vaga_de_emprego, **vaga_de_emprego_data.model_dump()))
+    return updated_vaga_de_emprego
+
+@router.delete("/{id_gestor}/vaga_de_emprego/{id_vaga_de_emprego}")
+async def deleteVagaDeEmprego(id_gestor: int, id_vaga_de_emprego: int, database: Session = Depends(getDatabase)):
+    vaga_de_emprego = VagaDeEmpregoRepository.getVagaDeEmpregoById(id_vaga_de_emprego, database)
+    if not vaga_de_emprego:
+        raise HTTPException(status_code=404, detail="Vaga de emprego não encontrada")
+    success = VagaDeEmpregoRepository.deleteVagaDeEmprego(vaga_de_emprego, database)
+    if not success:
+        raise HTTPException(status_code=500, detail="Erro ao deletar vaga de emprego")
+    return Response(status_code = status.HTTP_204_NO_CONTENT)

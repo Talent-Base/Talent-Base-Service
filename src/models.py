@@ -35,7 +35,7 @@ class Experiencia(Base):
 class Empresa(Base):
     __tablename__= "empresa"
 
-    id_empresa = Column(Integer, primary_key=True, index=True)
+    id_empresa = Column(Integer, primary_key=True, index=True, nullable=False)
     nome_empresa = Column(String(100), unique=True, nullable=False)
     cnpj = Column(String(20), unique=True, nullable=False)
     cidade = Column(String(50), nullable=False)
@@ -45,8 +45,8 @@ class Empresa(Base):
 class VagaDeEmprego(Base):
     __tablename__= "vagaDeEmprego"
 
-    id_vaga_de_emprego = Column(Integer, primary_key=True, index=True)
-    id_empresa = Column(Integer, ForeignKey("empresa.id_empresa"), index=True)
+    id_vaga_de_emprego = Column(Integer, primary_key=True, index=True, nullable=False)
+    id_empresa = Column(Integer, ForeignKey("empresa.id_empresa"), index=True, nullable=False)
     nome_vaga_de_emprego = Column(String(100), nullable=False)
     data = Column(Date, nullable=False)
     cidade = Column(String(50), nullable=False)

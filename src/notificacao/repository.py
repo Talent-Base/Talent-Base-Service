@@ -12,24 +12,22 @@ class NotificacaoRepository:
 
     def getNotificacaoById(id_notificacao: int, database: Session = Depends(getDatabase)):
             notificacao = database.query(Notificacao).filter(Notificacao.id_notificacao == id_notificacao).first()
-            if not notificacao:
-                raise HTTPException(
-                    status_code=404,
-                    detail="Notificacao not found"
-                )
             return notificacao
     
-    def createNotificacao(notificacao_data: Notificacao, database: Session = Depends(getDatabase)):
-        new_notificacao = notificacao_data
-        database.add(new_notificacao)
+    def getNotificacoesByCandidatoId(id_candidadto: int, database: Session = Depends(getDatabase)):
+        notificacoes = database.query(Notificacao).filter(Notificacao.id_candidato == id_candidadto).all()
+        return notificacoes
+
+    def createNotificacao(notificacao: Notificacao, database: Session = Depends(getDatabase)):
+        database.add(notificacao)
         database.commit()
-        database.refresh(new_notificacao)
-        return new_notificacao
+        database.refresh(notificacao)
+        return notificacao
     
     def deleteNotificacao(notificacao: Notificacao, database : Session = Depends(getDatabase)):
         database.delete(notificacao)
         database.commit()
-        return Response(status_code = status.HTTP_204_NO_CONTENT)
+        return True
     
     def updateNotificacao(notificacao_data: Notificacao, database: Session):
         database.merge(notificacao_data)

@@ -11,14 +11,16 @@ class CandidaturaRepository:
 
     def getCandidaturaById(id_candidatura: int, database: Session = Depends(getDatabase)):
         candidatura = database.query(Candidatura).filter(Candidatura.id_candidatura == id_candidatura).first()
-        if candidatura:
-            return candidatura
-        else:
-            raise HTTPException(
-                status_code=404,
-                detail="Candidatura not found"
-            )
-        
+        return candidatura
+    
+    def getCandidaturasByCandidatoId(id_candidato: int, database: Session = Depends(getDatabase)):
+        candidaturas = database.query(Candidatura).filter(Candidatura.id_candidato == id_candidato).all()
+        return candidaturas
+
+    def getCandidaturasByVagaDeEmpregoId(id_vaga_de_emprego: int, database: Session = Depends(getDatabase)):
+        candidaturas = database.query(Candidatura).filter(Candidatura.id_vaga_de_emprego == id_vaga_de_emprego).all()
+        return candidaturas
+
     def candidaturaExists(id_candidato: int, id_vaga_de_emprego: int, database: Session = Depends(getDatabase)):
         candidatura = database.query(Candidatura).filter(Candidatura.id_candidato == id_candidato, Candidatura.id_vaga_de_emprego == id_vaga_de_emprego).first()
         if candidatura:
@@ -41,4 +43,4 @@ class CandidaturaRepository:
     def deleteCandidatura(candidatura: Candidatura, database: Session = Depends(getDatabase)):
         database.delete(candidatura)
         database.commit()
-        return Response(status_code = status.HTTP_204_NO_CONTENT)
+        return True

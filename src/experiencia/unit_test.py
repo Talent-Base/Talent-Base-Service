@@ -1,58 +1,14 @@
-import os
-from sqlite3 import IntegrityError
 import sys
-from dotenv import load_dotenv
 from pathlib import Path
-from sqlalchemy import create_engine, StaticPool, event
-from sqlalchemy.orm import sessionmaker
-from sqlalchemy.engine import Engine
 import pytest
 
-
-sys.path.append(str(Path(__file__).resolve().parents[2]))
-
-try:
-    dotenv_path = Path(__file__).resolve().parents[2] / ".env.testing"
-    load_dotenv(dotenv_path)
-except IndexError:
-    print("Aviso: Caminho do arquivo .env.testing pode estar incorreto. Ignorando...")
-    pass
+sys.path.append(str(Path(__file__).resolve().parents[1])) 
 
 from ..database import Base
 from ..models import Experiencia, Candidato
 from .repository import ExperienciaRepository
 from ..candidato.repository import CandidatoRepository
 
-DATABASE_URL = os.getenv('DATABASE_URL', "sqlite:///:memory:")
-
-if DATABASE_URL is None:
-    raise ValueError("DATABASE_URL não pôde ser carregada e nenhum fallback foi definido.")
-
-
-engine = create_engine(
-    DATABASE_URL,
-    connect_args={
-        "check_same_thread": False,
-    },
-    poolclass=StaticPool,
-)
-TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-
-
-@event.listens_for(Engine, "connect")
-def enable_sqlite_foreign_keys(dbapi_connection, connection_record):
-    cursor = dbapi_connection.cursor()
-    cursor.execute("PRAGMA foreign_keys=ON")
-    cursor.close()
-
-
-@pytest.fixture
-def db():
-    Base.metadata.create_all(bind=engine)
-    session = TestingSessionLocal()
-    yield session
-    session.close()
-    Base.metadata.drop_all(bind=engine)
 
 @pytest.fixture
 def add_candidato(db):

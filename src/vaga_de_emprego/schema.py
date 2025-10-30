@@ -1,20 +1,36 @@
 from typing import Optional
 from datetime import date
 from decimal import Decimal
+from enum import Enum
 
 from pydantic import BaseModel
 
+class NivelEnum(str, Enum):
+    JUNIOR = "Junior"
+    SENIOR = "Senior"
+    PLENO = "Pleno"
+    EXECUTIVO = "Executivo"
+
+class TipoContrato(str, Enum):
+    CLT = "CLT"
+    ESTAGIO = "Estagio"
+
+class Modalidade(str, Enum):
+    PRESENCIAL = "Presencial"
+    HIBRIDO = "Híbrido"
+    REMOTO = "Remoto"
+
 class VagaDeEmpregoBase(BaseModel):
-    nome: str
-    empresa: int
+    nome_vaga_de_emprego: str
+    id_empresa: int
     data: date
     estado: str
     cidade: str
     salario: Decimal
     cargo: str
-    nivel: {"Junior", "Pleno", "Senior", "Executivo"}
-    tipo_contrato: {"CLT", "Estagio"}
-    modalidade: {"Presencial", "Hibrido", "Remoto"}
+    nivel: NivelEnum
+    tipo_contrato: TipoContrato
+    modalidade: Modalidade
     descricao: Optional[str] = None
 
 class VagaDeEmpregoResponse(VagaDeEmpregoBase):

@@ -11,16 +11,10 @@ class EmpresaRepository:
 
     def getEmpresaById(id_empresa: int, database: Session = Depends(getDatabase)):
         empresa = database.query(Empresa).filter(Empresa.id_empresa == id_empresa).first()
-        if empresa:
-            return empresa
-        else:
-            raise HTTPException(
-                status_code=404,
-                detail="Empresa not found"
-            )
+        return empresa
 
-    def empresaExistsByName(empresa_name: str, database: Session = Depends(getDatabase)):
-        empresa = database.query(Empresa).filter(nome_empresa = empresa_name).first()
+    def empresaExistsByCnpj(cnpj: str, database: Session = Depends(getDatabase)):
+        empresa = database.query(Empresa).filter(cnpj == cnpj).first()
         if empresa:
             return True
         else:
@@ -40,4 +34,4 @@ class EmpresaRepository:
     def deleteEmpresa(empresa: Empresa, database: Session = Depends(getDatabase)):
         database.delete(empresa)
         database.commit()
-        return Response(status_code = status.HTTP_204_NO_CONTENT)
+        return True

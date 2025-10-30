@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException, Depends, Response, status
 from sqlalchemy.orm import Session
 
 from ..database import engine, Base, getDatabase
@@ -22,6 +22,8 @@ async def getNotificacoes(database: Session = Depends(getDatabase)):
 @router.get("/{id_notificacao}")
 async def getNotificacaoById(id_notificacao: int, database: Session = Depends(getDatabase)):
     notificacao = NotificacaoRepository.getNotificacaoById(id_notificacao, database)
+    if not notificacao:
+        raise HTTPException(status_code=404, detail="Notificacao não encontrada")
     return notificacao
 
 @router.post("/")
@@ -39,6 +41,9 @@ async def updateNotificacaoById(id_notificacao: int, notificacao_data: Notificac
 @router.delete("/{id_notificacao}")
 async def deleteNotificacao(id_notificacao: int, database: Session = Depends(getDatabase)):
     notificacao = NotificacaoRepository.getNotificacaoById(id_notificacao, database)
-    if notificacao:
-        response = NotificacaoRepository.deleteNotificacao(notificacao, database)
-        return response
+    if not notificacao:
+        raise HTTPException(status_code=404, detail="Notificacoes não encontradas")
+    success = NotificacaoRepository.deleteNotificacao(notificacao, database)
+    if not success:
+        raise HTTPException(status_code=404, detail="Erro ao deletar notificacao")
+    return Response(status_code = status.HTTP_204_NO_CONTENT)
