@@ -30,7 +30,7 @@ except Exception as e:
 
 # Pega a DATABASE_URL do ambiente (seja do Docker ou do .env.testing)
 # Fallback para SQLite em memória se NADA for definido
-DATABASE_URL = os.getenv('DATABASE_URL', "sqlite:///:memory:")
+DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///:memory:")
 
 print(f"--- INICIANDO TESTES COM DATABASE: {DATABASE_URL} ---")
 
@@ -54,6 +54,7 @@ engine = create_engine(DATABASE_URL, **engine_args)
 
 # O listener do PRAGMA TAMBÉM deve ser condicional
 if DATABASE_URL.startswith("sqlite"):
+
     @event.listens_for(Engine, "connect")
     def enable_sqlite_foreign_keys(dbapi_connection, connection_record):
         """Ativa o suporte a Foreign Keys no SQLite."""
@@ -68,13 +69,14 @@ if DATABASE_URL.startswith("sqlite"):
 # Ajuste o caminho 'from ..database import Base' se o seu arquivo database.py
 # estiver em um local diferente (ex: src/database.py)
 try:
-    from src.database import Base 
+    from src.database import Base
 except ImportError:
     # Tenta um caminho relativo se o primeiro falhar
     from .database import Base
 
 # Cria a sessão de teste
 TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+
 
 @pytest.fixture(scope="session")
 def db_engine():

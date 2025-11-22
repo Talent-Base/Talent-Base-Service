@@ -2,6 +2,7 @@ from datetime import date
 from typing import Optional
 from pydantic import BaseModel
 
+
 class NotificacaoBase(BaseModel):
     titulo: str
     mensagem: str
@@ -9,6 +10,7 @@ class NotificacaoBase(BaseModel):
     id_candidatura: Optional[int] = None
     id_vaga_de_emprego: Optional[int] = None
     visualizada: bool = False
+
 
 class NotificacaoResponse(NotificacaoBase):
     id: int

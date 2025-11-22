@@ -5,20 +5,24 @@ from enum import Enum
 
 from pydantic import BaseModel
 
+
 class NivelEnum(str, Enum):
     JUNIOR = "Junior"
     SENIOR = "Senior"
     PLENO = "Pleno"
     EXECUTIVO = "Executivo"
 
+
 class TipoContrato(str, Enum):
     CLT = "CLT"
     ESTAGIO = "Estagio"
+
 
 class Modalidade(str, Enum):
     PRESENCIAL = "Presencial"
     HIBRIDO = "Híbrido"
     REMOTO = "Remoto"
+
 
 class VagaDeEmpregoBase(BaseModel):
     nome_vaga_de_emprego: str
@@ -33,6 +37,6 @@ class VagaDeEmpregoBase(BaseModel):
     modalidade: Modalidade
     descricao: Optional[str] = None
 
+
 class VagaDeEmpregoResponse(VagaDeEmpregoBase):
     id_vaga_de_emprego: int
-
