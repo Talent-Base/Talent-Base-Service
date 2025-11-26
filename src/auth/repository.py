@@ -18,6 +18,7 @@ SECRET_KEY = os.getenv(
 )
 ALGORITHM = os.getenv("ALGORITHM", "HS256")
 ACCESS_TOKEN_EXPIRE_MINUTES = os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", 30)
+REFRESH_TOKEN_EXPIRE_DAYS = os.getenv("REFRESH_TOKEN_EXPIRE_DAYS", 30)
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/login")
 
@@ -31,6 +32,15 @@ def createAccessToken(data: dict, expires_delta: timedelta | None = None):
     to_encode.update({"exp": expire})
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt
+
+
+def createRefreshToken(data: dict):
+    to_encode = data.copy()
+    expire = datetime.now(timezone.utc) + timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS)
+    to_encode.update({"exp": expire})
+
+    refresh_token = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+    return refresh_token
 
 
 def authenticateUser(
@@ -67,7 +77,7 @@ async def getCurrentUser(
 
 
 async def getCurrentActiveUser(current_user: Usuario = Depends(getCurrentUser)):
-    if current_user.disabled:
+    if not current_user.ativo:
         raise HTTPException(status_code=400, detail="Inactive user")
     return current_user
 
@@ -86,5 +96,14 @@ def requireGestor(user: Usuario = Depends(getCurrentActiveUser)):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Apenas gestores podem acessar esta rota.",
+        )
+    return user
+
+
+def requireAdmin(user: Usuario = Depends(getCurrentActiveUser)):
+    if user.papel != "admin":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Apenas admins podem acessar esta rota.",
         )
     return user

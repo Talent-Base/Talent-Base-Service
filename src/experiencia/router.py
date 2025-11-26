@@ -35,7 +35,8 @@ async def createExperienciaByCandidatoId(
     database: Session = Depends(getDatabase),
 ):
     experiencias = ExperienciaRepository.createExperiencia(
-        Experiencia(id_usuario=id_candidato, **experiencia_data.model_dump()), database
+        Experiencia(id_candidato=id_candidato, **experiencia_data.model_dump()),
+        database,
     )
     if not experiencias:
         raise HTTPException(status_code=404, detail="Experiências não encontradas")

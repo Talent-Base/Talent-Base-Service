@@ -23,11 +23,17 @@ async def getVagasDeEmprego(database: Session = Depends(getDatabase)):
     return vagas_de_emprego
 
 
-@router.get("/")
+@router.get("_com_empresas")
+async def getVagasDeEmprego(database: Session = Depends(getDatabase)):
+    vagas_de_emprego = VagaDeEmpregoRepository.getAllVagasDeEmpregoComEmpresas(database)
+    return vagas_de_emprego
+
+
+@router.get("/{id_vaga_de_emprego}")
 async def getVagaDeEmpregoById(
     id_vaga_de_emprego: int, database: Session = Depends(getDatabase)
 ):
-    vagas_de_emprego = VagaDeEmpregoRepository.getVagaDeEmpregoById(
+    vagas_de_emprego = VagaDeEmpregoRepository.getVagaDeEmpregoWithEmpresaById(
         id_vaga_de_emprego, database
     )
     return vagas_de_emprego
@@ -82,7 +88,7 @@ async def updateVagaDeEmpregoById(
 async def getVagaDeEmpregosCandidaturas(
     id_vaga_de_emprego: int, database: Session = Depends(getDatabase)
 ):
-    candidaturas = CandidaturaRepository.getCandidaturasByVagaDeEmpregoId(
+    candidaturas = CandidaturaRepository.getCandidaturasWithCandidatoByVagaDeEmpregoId(
         id_vaga_de_emprego, database
     )
     return candidaturas

@@ -1,6 +1,9 @@
 from fastapi import APIRouter, HTTPException, Response, status, Depends
 from sqlalchemy.orm import Session
 
+from src.empresa.repository import EmpresaRepository
+from src.empresa.schema import EmpresaBase
+
 from ..database import engine, Base, getDatabase
 from .repository import GestorRepository
 from .schema import GestorBase
@@ -34,13 +37,20 @@ async def getGestorById(id_gestor: int, database: Session = Depends(getDatabase)
 
 @router.post("/")
 async def createGestor(
-    new_gestor: GestorBase, database: Session = Depends(getDatabase)
+    new_gestor: GestorBase,
+    empresa_data: EmpresaBase,
+    database: Session = Depends(getDatabase),
 ):
     gestor_already_exists = GestorRepository.gestorExistsByEmail(
         new_gestor.email, database
     )
     if gestor_already_exists:
         raise HTTPException(status_code=400, detail="Email already registered")
+    empresa_already_exists = EmpresaRepository.empresaAlredyExists(
+        empresa_data.cnpj, empresa_data.nome_empresa, database
+    )
+    if empresa_already_exists:
+        raise HTTPException(status_code=400, detail="Empresa already registered")
     else:
         new_gestor = GestorRepository.createGestor(
             Gestor(**new_gestor.model_dump()), database

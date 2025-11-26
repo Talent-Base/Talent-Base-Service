@@ -1,5 +1,5 @@
 from fastapi import Depends
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 
 from ..database import getDatabase
 from ..models import Candidatura
@@ -25,6 +25,30 @@ class CandidaturaRepository:
         candidaturas = (
             database.query(Candidatura)
             .filter(Candidatura.id_candidato == id_candidato)
+            .all()
+        )
+        return candidaturas
+
+    def getCandidaturasWithVagasDeEmpregoByCandidatoId(
+        id_candidato: int, database: Session = Depends(getDatabase)
+    ):
+        candidaturas = (
+            database.query(Candidatura)
+            .options(joinedload(Candidatura.vaga))
+            .filter(Candidatura.id_candidato == id_candidato)
+            .all()
+        )
+        return candidaturas
+
+    def getCandidaturasWithCandidatoByVagaDeEmpregoId(
+        id_vaga_de_emprego: int, database: Session
+    ):
+        candidaturas = (
+            database.query(Candidatura)
+            .options(
+                joinedload(Candidatura.candidato),
+            )
+            .filter(Candidatura.id_vaga_de_emprego == id_vaga_de_emprego)
             .all()
         )
         return candidaturas

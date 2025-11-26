@@ -28,7 +28,7 @@ class Usuario(Base):
     email = Column(String, unique=True, index=True, nullable=False)
     senha = Column(String, nullable=False)
     papel = Column(Enum(Papel), nullable=False)
-    disabled = Column(Boolean, default=False)
+    ativo = Column(Boolean, default=True)
 
     candidato = relationship(
         "Candidato",
@@ -54,6 +54,7 @@ class Candidato(Base):
     resumo = Column(String(500), nullable=True)
     situacao_empregaticia = Column(String(20), nullable=True)
 
+    candidaturas = relationship("Candidatura", back_populates="candidato")
     usuario = relationship(
         "Usuario",
         back_populates="candidato",
@@ -87,6 +88,8 @@ class Empresa(Base):
     estado = Column(String(3), nullable=False)
     descricao = Column(String(500), nullable=True)
 
+    vagas = relationship("VagaDeEmprego", back_populates="empresa")
+
 
 class VagaDeEmprego(Base):
     __tablename__ = "vagaDeEmprego"
@@ -106,6 +109,9 @@ class VagaDeEmprego(Base):
     modalidade = Column(String(50), nullable=False)
     descricao = Column(String(200), nullable=False)
 
+    empresa = relationship("Empresa", back_populates="vagas")
+    candidaturas = relationship("Candidatura", back_populates="vaga")
+
 
 class Candidatura(Base):
     __tablename__ = "candidatura"
@@ -117,6 +123,10 @@ class Candidatura(Base):
     )
     status = Column(String(50), nullable=False)
     data = Column(DateTime, nullable=False)
+    data_atualizacao = Column(DateTime, nullable=True)
+
+    vaga = relationship("VagaDeEmprego", back_populates="candidaturas")
+    candidato = relationship("Candidato", back_populates="candidaturas")
 
 
 class Notificacao(Base):

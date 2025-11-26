@@ -1,9 +1,9 @@
-from fastapi import APIRouter, HTTPException, Depends, Response, status
+from fastapi import APIRouter, Body, HTTPException, Depends, Response, status
 from sqlalchemy.orm import Session
 
 from ..database import engine, Base, getDatabase
 from .repository import CandidaturaRepository
-from .schema import CandidaturaBase
+from .schema import CandidaturaBase, CandidaturaUpdate, Status
 from ..models import Candidatura
 
 Base.metadata.create_all(bind=engine)
@@ -16,7 +16,7 @@ router = APIRouter(
 
 
 @router.get("/")
-async def getCandidatura(database: Session = Depends(getDatabase)):
+async def getAllCandidatura(database: Session = Depends(getDatabase)):
     candidaturas = CandidaturaRepository.getAllCandidaturas(database)
     return candidaturas
 
@@ -29,6 +29,16 @@ async def getCandidaturaById(
     if candidatura is None:
         raise HTTPException(status_code=404, detail="Candidatura not found")
     return candidatura
+
+
+@router.get("/{id_vaga_de_emprego}/{id_candidato}")
+async def candidaturaExists(
+    id_candidato: int, id_vaga_de_emprego: int, database: Session = Depends(getDatabase)
+):
+    candidatura_exists = CandidaturaRepository.candidaturaExists(
+        id_candidato, id_vaga_de_emprego, database
+    )
+    return {"has_applied": candidatura_exists}
 
 
 @router.post("/")
@@ -47,22 +57,21 @@ async def createCandidatura(
 
 
 @router.put("/{id_candidatura}")
-async def updateCandidaturaStatusById(
+async def updateCandidaturaById(
     id_candidatura: int,
-    candidatura_status: str,
+    dados_atualizacao: CandidaturaUpdate,  # O corpo inteiro é validado aqui
     database: Session = Depends(getDatabase),
 ):
     candidatura = CandidaturaRepository.getCandidaturaById(id_candidatura, database)
+
     if not candidatura:
         raise HTTPException(status_code=404, detail="Candidatura não encontrada")
-    updated_candidatura = CandidaturaRepository.updateCandidatura(
-        Candidatura(
-            id_candidatura=id_candidatura,
-            **candidatura.model_dump(),
-            status=candidatura_status,
-        ),
-        database,
-    )
+
+    candidatura.status = dados_atualizacao.status
+    candidatura.data_atualizacao = dados_atualizacao.data_atualizacao
+
+    updated_candidatura = CandidaturaRepository.updateCandidatura(candidatura, database)
+
     return updated_candidatura
 
 

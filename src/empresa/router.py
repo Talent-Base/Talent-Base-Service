@@ -24,7 +24,7 @@ async def getEmpresas(database: Session = Depends(getDatabase)):
     return empresas
 
 
-@router.get("/")
+@router.get("/{id_empresa}")
 async def getEmpresaById(id_empresa: int, database: Session = Depends(getDatabase)):
     empresa = EmpresaRepository.getEmpresaById(id_empresa, database)
     if not empresa:
@@ -36,8 +36,8 @@ async def getEmpresaById(id_empresa: int, database: Session = Depends(getDatabas
 async def createEmpresa(
     empresa_data: EmpresaBase, database: Session = Depends(getDatabase)
 ):
-    empresa_already_exists = EmpresaRepository.empresaExistsByCnpj(
-        empresa_data.cnpj, database
+    empresa_already_exists = EmpresaRepository.empresaAlredyExists(
+        empresa_data.cnpj, empresa_data.nome_empresa, database
     )
     if empresa_already_exists:
         raise HTTPException(status_code=400, detail="Empresa already registered")
@@ -51,9 +51,12 @@ async def createEmpresa(
 @router.delete("/{id_empresa}")
 async def deleteEmpresaById(id_empresa: int, database: Session = Depends(getDatabase)):
     empresa = EmpresaRepository.getEmpresaById(id_empresa, database)
-    if empresa:
-        deleted_experiencia = EmpresaRepository.deleteEmpresa(empresa, database)
-        return deleted_experiencia
+    if not empresa:
+        raise HTTPException(status_code=404, detail="Empresa não encontrada")
+    success = EmpresaRepository.deleteEmpresa(empresa, database)
+    if not success:
+        raise HTTPException(status_code=500, detail="Erro ao deletar empresa")
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
 @router.put("/{id_empresa}")
@@ -63,10 +66,10 @@ async def updateEmpresaById(
     empresa = EmpresaRepository.getEmpresaById(id_empresa, database)
     if not empresa:
         raise HTTPException(status_code=404, detail="Empresa não encontrada")
-    success = EmpresaRepository.deleteEmpresa(empresa, database)
-    if not success:
-        raise HTTPException(status_code=500, detail="Erro ao deletar candidato")
-    return Response(status_code=status.HTTP_204_NO_CONTENT)
+    updated_empresa = EmpresaRepository.updateEmpresa(
+        Empresa(id_empresa=id_empresa, **empresa_data.model_dump()), database
+    )
+    return updated_empresa
 
 
 @router.get("/{id_empresa}/vagas_de_emprego")

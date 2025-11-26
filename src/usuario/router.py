@@ -1,16 +1,28 @@
 from fastapi import APIRouter, HTTPException, Depends, Response, status
 from sqlalchemy.orm import Session
 
+from src.empresa.repository import EmpresaRepository
+
 from ..database import engine, Base, getDatabase
 from ..security import getPasswordHash
 from .repository import UsuarioRepository
-from .schema import UsuarioCreate, UsuarioUpdate, UsuarioResponse
-from ..models import Usuario, Candidato, Gestor
+from .schema import (
+    AuthResponse,
+    UsuarioCreate,
+    UsuarioGestorCreate,
+    UsuarioUpdate,
+    UsuarioResponse,
+)
+from ..models import Empresa, Usuario, Candidato, Gestor
 
 from ..candidato.repository import CandidatoRepository
 from ..gestor.repository import GestorRepository
 
-from ..auth.repository import getCurrentActiveUser
+from ..auth.repository import (
+    createAccessToken,
+    createRefreshToken,
+    getCurrentActiveUser,
+)
 
 Base.metadata.create_all(bind=engine)
 
@@ -35,7 +47,7 @@ async def getUsuarioById(id_usuario: str, database: Session = Depends(getDatabas
     return usuario
 
 
-@router.post("/", response_model=UsuarioResponse)
+@router.post("/", response_model=AuthResponse)
 async def createUsuario(
     usuario_data: UsuarioCreate, database: Session = Depends(getDatabase)
 ):
@@ -67,7 +79,94 @@ async def createUsuario(
                 ),
                 database,
             )
-        return new_usuario
+        access_token = createAccessToken({"sub": new_usuario.email})
+        refresh_token = createRefreshToken({"sub": new_usuario.email})
+        return {
+            "access_token": access_token,
+            "refresh_token": refresh_token,
+            "user": UsuarioResponse.model_validate(new_usuario),
+        }
+
+
+@router.post("/candidato", response_model=AuthResponse)
+async def createUsuarioCandidato(
+    usuario_data: UsuarioCreate, database: Session = Depends(getDatabase)
+):
+    usuario_already_exists = UsuarioRepository.usuarioExistsByEmail(
+        usuario_data.email, database
+    )
+    if usuario_already_exists:
+        raise HTTPException(status_code=400, detail="Email already registered")
+    else:
+        usuario_data.senha = getPasswordHash(usuario_data.senha)
+        new_usuario = UsuarioRepository.createUsuario(
+            Usuario(**usuario_data.model_dump()), database
+        )
+        CandidatoRepository.createCandidato(
+            Candidato(
+                id_candidato=new_usuario.id,
+                nome=usuario_data.nome,
+                email=usuario_data.email,
+            ),
+            database,
+        )
+
+        access_token = createAccessToken({"sub": new_usuario.email})
+        refresh_token = createRefreshToken({"sub": new_usuario.email})
+        return {
+            "access_token": access_token,
+            "refresh_token": refresh_token,
+            "user": UsuarioResponse.model_validate(new_usuario),
+        }
+
+
+@router.post("/gestor", response_model=AuthResponse)
+async def createUsuarioGestor(
+    usuario_data: UsuarioGestorCreate, database: Session = Depends(getDatabase)
+):
+    usuario_already_exists = UsuarioRepository.usuarioExistsByEmail(
+        usuario_data.email, database
+    )
+    empresa_already_exists = EmpresaRepository.empresaAlredyExists(
+        usuario_data.empresa.cnpj, usuario_data.empresa.nome_empresa, database
+    )
+    if usuario_already_exists or empresa_already_exists:
+        raise HTTPException(
+            status_code=400,
+            detail="Email already registered"
+            if usuario_already_exists
+            else "Empresa already registered",
+        )
+    else:
+        usuario_data.senha = getPasswordHash(usuario_data.senha)
+        new_usuario = UsuarioRepository.createUsuario(
+            Usuario(
+                nome=usuario_data.nome,
+                email=usuario_data.email,
+                senha=usuario_data.senha,
+                papel=usuario_data.papel,
+            ),
+            database,
+        )
+        new_empresa = EmpresaRepository.createEmpresa(
+            Empresa(**usuario_data.empresa.model_dump()), database
+        )
+        GestorRepository.createGestor(
+            Gestor(
+                id_gestor=new_usuario.id,
+                nome=usuario_data.nome,
+                email=usuario_data.email,
+                id_empresa=new_empresa.id_empresa,
+            ),
+            database,
+        )
+        access_token = createAccessToken({"sub": new_usuario.email})
+        refresh_token = createRefreshToken({"sub": new_usuario.email})
+        return {
+            "access_token": access_token,
+            "refresh_token": refresh_token,
+            "user": UsuarioResponse.model_validate(new_usuario),
+        }
 
 
 @router.put("/{id_usuario}")

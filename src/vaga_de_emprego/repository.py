@@ -1,5 +1,5 @@
 from fastapi import Depends
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 
 from ..database import getDatabase
 from ..models import VagaDeEmprego
@@ -8,6 +8,13 @@ from ..models import VagaDeEmprego
 class VagaDeEmpregoRepository:
     def getAllVagasDeEmprego(database: Session = Depends(getDatabase)):
         return database.query(VagaDeEmprego).all()
+
+    def getAllVagasDeEmpregoComEmpresas(database: Session = Depends(getDatabase)):
+        return (
+            database.query(VagaDeEmprego)
+            .options(joinedload(VagaDeEmprego.empresa))
+            .all()
+        )
 
     def getVagaDeEmpregoById(
         id_vaga_de_emprego: int, database: Session = Depends(getDatabase)
@@ -19,11 +26,24 @@ class VagaDeEmpregoRepository:
         )
         return vaga_de_emprego
 
+    def getVagaDeEmpregoWithEmpresaById(
+        id_vaga_de_emprego: int, database: Session = Depends(getDatabase)
+    ):
+        vaga_de_emprego = (
+            database.query(VagaDeEmprego)
+            .options(joinedload(VagaDeEmprego.empresa))
+            .filter(VagaDeEmprego.id_vaga_de_emprego == id_vaga_de_emprego)
+            .first()
+        )
+        return vaga_de_emprego
+
     def getVagaDeEmpregoByEmpresaId(
         id_empresa: int, database: Session = Depends(getDatabase)
     ):
         vaga_de_emprego = (
-            database.query(VagaDeEmprego).filter(id_empresa == id_empresa).all()
+            database.query(VagaDeEmprego)
+            .filter(VagaDeEmprego.id_empresa == id_empresa)
+            .all()
         )
         return vaga_de_emprego
 

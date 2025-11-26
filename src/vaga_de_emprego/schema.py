@@ -5,6 +5,8 @@ from enum import Enum
 
 from pydantic import BaseModel
 
+from ..empresa.schema import EmpresaResponse
+
 
 class NivelEnum(str, Enum):
     JUNIOR = "Junior"
@@ -40,3 +42,7 @@ class VagaDeEmpregoBase(BaseModel):
 
 class VagaDeEmpregoResponse(VagaDeEmpregoBase):
     id_vaga_de_emprego: int
+
+
+class VagaDeEmpregoWithEmpresaResponse(VagaDeEmpregoResponse):
+    empresa: EmpresaResponse

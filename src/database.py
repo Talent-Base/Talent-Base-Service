@@ -12,6 +12,6 @@ Base = declarative_base()
 def getDatabase(expire_on_commit: bool = True):
     db = SessionLocal(expire_on_commit=expire_on_commit)
     try:
-        return db
+        yield db
     finally:
         db.close()

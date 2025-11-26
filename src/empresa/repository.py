@@ -15,8 +15,14 @@ class EmpresaRepository:
         )
         return empresa
 
-    def empresaExistsByCnpj(cnpj: str, database: Session = Depends(getDatabase)):
-        empresa = database.query(Empresa).filter(Empresa.cnpj == cnpj).first()
+    def empresaAlredyExists(
+        cnpj: str, nome_empresa, database: Session = Depends(getDatabase)
+    ):
+        empresa = (
+            database.query(Empresa)
+            .filter(Empresa.cnpj == cnpj and Empresa.nome_empresa == nome_empresa)
+            .first()
+        )
         if empresa:
             return True
         else:

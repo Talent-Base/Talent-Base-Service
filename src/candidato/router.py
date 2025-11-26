@@ -1,3 +1,4 @@
+from typing import List
 from fastapi import APIRouter, HTTPException, Response, status, Depends
 from sqlalchemy.orm import Session
 
@@ -12,7 +13,7 @@ from ..experiencia.repository import ExperienciaRepository
 from ..experiencia.schema import ExperienciaBase
 
 from ..candidatura.repository import CandidaturaRepository
-from ..candidatura.schema import CandidaturaBase
+from ..candidatura.schema import CandidaturaBase, CandidaturaWithVagaResponse
 
 from ..notificacao.repository import NotificacaoRepository
 from ..notificacao.schema import NotificacaoBase
@@ -71,7 +72,7 @@ async def updateCandidatoById(
     if not candidato:
         raise HTTPException(status_code=404, detail="Candidato não encontrado")
     updated_candidato = CandidatoRepository.updateCandidato(
-        Candidato(id_usuario=id_candidato, **candidato_data.model_dump()), database
+        Candidato(id_candidato=id_candidato, **candidato_data.model_dump()), database
     )
     return updated_candidato
 
@@ -139,7 +140,7 @@ async def deleteCandidatosExperiencia(
 async def getCandidatosCandidaturas(
     id_candidato: int, database: Session = Depends(getDatabase)
 ):
-    candidaturas = CandidaturaRepository.getCandidaturasByCandidatoId(
+    candidaturas = CandidaturaRepository.getCandidaturasWithVagasDeEmpregoByCandidatoId(
         id_candidato, database
     )
     if not candidaturas:
