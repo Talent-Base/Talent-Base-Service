@@ -26,14 +26,14 @@ app.include_router(admin_router)
 
 
 app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["http://localhost:3000"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+	CORSMiddleware,
+	allow_origins=['http://localhost:3000'],
+	allow_credentials=True,
+	allow_methods=['*'],
+	allow_headers=['*'],
 )
 
 
-@app.get("/")
+@app.get('/')
 async def root():
-    return {"message": "Hello there!"}
+	return {'message': 'Hello there!'}

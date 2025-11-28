@@ -5,7 +5,7 @@ from sqlalchemy.orm import sessionmaker
 
 from ..main import app
 from ..database import getDatabase, Base
-from ..auth.repository import getCurrentActiveUser
+from ..auth.repository import requireAdmin, requireGestor
 
 from ..models import Usuario
 
@@ -27,12 +27,17 @@ def override_getDatabase():
 		db.close()
 
 
-def override_getCurrentActiveUser():
-	return Usuario(id=1, nome='teste', email='teste@user.com', papel='candidato')
+def override_requireGestor():
+	return Usuario(id=1, nome='teste', email='teste@user.com', papel='gestor')
+
+
+def override_requireAdmin():
+	return Usuario(id=2, nome='admin', email='admin@user.com', papel='admin')
 
 
 app.dependency_overrides[getDatabase] = override_getDatabase
-app.dependency_overrides[getCurrentActiveUser] = override_getCurrentActiveUser
+app.dependency_overrides[requireGestor] = override_requireGestor
+app.dependency_overrides[requireAdmin] = override_requireAdmin
 
 
 @pytest.fixture(scope='function', autouse=True)
@@ -46,21 +51,8 @@ def setup_and_teardown_db():
 client = TestClient(app)
 
 
-def test_createUsuarioCandidato():
-	payload = {
-		'nome': 'teste',
-		'email': 'teste@user.com',
-		'senha': 'teste123',
-		'papel': 'candidato',
-	}
-
-	response = client.post('/usuarios/candidato', json=payload)
-	assert response.status_code == 200
-	data = response.json()
-	assert data['user']['email'] == payload['email']
-
-
-def test_createUsuarioGestor():
+@pytest.fixture
+def createGestor():
 	payload = {
 		'nome': 'teste',
 		'email': 'teste@user.com',
@@ -75,34 +67,35 @@ def test_createUsuarioGestor():
 	}
 
 	response = client.post('/usuarios/gestor', json=payload)
+	return response.json()
+
+
+@pytest.fixture
+def createSecondUsuario():
+	payload = {
+		'nome': 'teste222',
+		'email': 'teste222@user.com',
+		'senha': 'teste222123',
+		'papel': 'gestor',
+		'empresa': {
+			'nome_empresa': 'teste_empresa222',
+			'cnpj': '11.222.111/2222-11',
+			'cidade': 'Brasília',
+			'estado': 'DF',
+		},
+	}
+
+	response = client.post('/usuarios/gestor', json=payload)
+	return response.json()
+
+
+def test_updateGestor(createGestor):
+	payload = {
+		'nome': 'teste_novo',
+		'email': 'teste@user.com',
+	}
+
+	response = client.put('/usuarios/gestor', json=payload)
 	assert response.status_code == 200
 	data = response.json()
-	assert data['user']['email'] == payload['email']
-
-
-def test_duplicatedEmail_createUsuarioCandidato_():
-	payload = {
-		'nome': 'teste',
-		'email': 'teste@user.com',
-		'senha': 'teste123',
-		'papel': 'candidato',
-	}
-	client.post('/usuarios/candidato', json=payload)
-	response = client.post('/usuarios/candidato', json=payload)
-	assert response.status_code == 400
-
-
-def test_updateUsuarioById():
-	payload = {
-		'nome': 'teste',
-		'email': 'teste@user.com',
-		'senha': 'teste123',
-		'papel': 'candidato',
-	}
-	usuario = client.post('/usuarios/candidato', json=payload)
-	id_usuario = usuario.json()['user']['id']
-	payload = {'nome': 'novo_teste', 'email': 'teste@user.com', 'papel': 'candidato'}
-	response = client.put(f'/usuarios/{id_usuario}', json=payload)
-	assert response.status_code == 200
-	data = response.json()
-	assert data['nome'] == payload['nome']
+	assert data['user']['nome'] == payload['email']

@@ -2,20 +2,17 @@ import os
 from pwdlib import PasswordHash
 
 SECRET_KEY = os.getenv(
-    "SECRET_KEY", "3451923f1a545ea6fe648d5a2ff6eca91a5522d9652d742df632779c8a75c8ce"
+	'SECRET_KEY', '3451923f1a545ea6fe648d5a2ff6eca91a5522d9652d742df632779c8a75c8ce'
 )
-ALGORITHM = os.getenv("ALGORITHM", "HS256")
-ACCESS_TOKEN_EXPIRE_MINUTES = os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", 30)
-# SECRET_KEY = "09d25e094faa6ca2556c818166b7a9563b93f7099f6f0f4caa6cf63b88e8d3e7"
-# ALGORITHM = "HS256"
-# ACCESS_TOKEN_EXPIRE_MINUTES = 30
+ALGORITHM = os.getenv('ALGORITHM', 'HS256')
+ACCESS_TOKEN_EXPIRE_MINUTES = os.getenv('ACCESS_TOKEN_EXPIRE_MINUTES', 30)
 
 password_hash = PasswordHash.recommended()
 
 
 def getPasswordHash(password):
-    return password_hash.hash(password)
+	return password_hash.hash(password)
 
 
 def verifyPassword(plain_password, hashed_password):
-    return password_hash.verify(plain_password, hashed_password)
+	return password_hash.verify(plain_password, hashed_password)

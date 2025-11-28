@@ -2,116 +2,160 @@ import sys
 from pathlib import Path
 import pytest
 
+
 sys.path.append(str(Path(__file__).resolve().parents[1]))
 
-from ..database import Base
-from ..models import Gestor, Empresa
+from ..models import Gestor, Empresa, Usuario
 from .repository import GestorRepository
 from ..empresa.repository import EmpresaRepository
+from ..usuario.repository import UsuarioRepository
+
+
+def make_usuario_e_gestor(nome, email, id_empresa=None):
+	usuario = Usuario(
+		nome=nome,
+		email=email,
+		senha='hash',
+		papel='gestor',
+		ativo=True,
+	)
+
+	gestor = Gestor(nome=nome, email=email, id_empresa=id_empresa)
+
+	usuario.gestor = gestor
+	return usuario, gestor
+
+
+def make_gestores(valid_empresa_id: bool = True):
+	if valid_empresa_id:
+		id_empresa = 1
+	else:
+		id_empresa = -1
+
+	dados = [
+		('Mariana Villasboas', 'villasboas.mariana@empresaa.br', id_empresa),
+		('Valquíria Saes', 'saes.val@empresaa.br', id_empresa),
+		('Carlos Gomide', 'gom.carlos@empresaa.br', None),
+	]
+
+	gestores = []
+	for nome, email, emp_id in dados:
+		gestores.append(make_usuario_e_gestor(nome, email, emp_id))
+
+	return gestores
 
 
 @pytest.fixture
 def add_empresa(db):
-    empresa = Empresa(
-        id_empresa=1,
-        nome_empresa="Empresa A",
-        cnpj="0000000000000",
-        cidade="Cidade A",
-        estado="AA",
-        descricao="A Empresa A é a responsavel pela saúde",
-    )
-    return EmpresaRepository.createEmpresa(empresa, db)
+	empresa = Empresa(
+		id_empresa=1,
+		nome_empresa='Empresa A',
+		cnpj='0000000000000',
+		cidade='Cidade A',
+		estado='AA',
+		descricao='A Empresa A é a responsavel pela saúde',
+	)
+	return EmpresaRepository.createEmpresa(empresa, db)
 
 
 @pytest.fixture
 def sample_gestor(add_empresa):
-    return Gestor(
-        nome="Mariana Villasboas",
-        email="villasboas.mariana@empresaa.br",
-        # id_empresa = add_empresa.id_empresa
-    )
+	usuario, gestor = make_usuario_e_gestor(
+		nome='Mariana Villasboas',
+		email='villasboas.mariana@empresaa.br',
+		id_empresa=add_empresa.id_empresa,
+	)
+	return usuario, gestor
 
 
-def make_gestores(valid_empresa_id: bool = True):
-    if valid_empresa_id:
-        id_empresa = 1
-    else:
-        id_empresa = -1
+@pytest.mark.parametrize('usuario_gestor', make_gestores())
+def test_createGestor(usuario_gestor, add_empresa, db):
+	usuario, gestor = usuario_gestor
 
-    return [
-        Gestor(
-            nome="Mariana Villasboas",
-            email="villasboas.mariana@empresaa.br",
-            id_empresa=id_empresa,
-        ),
-        Gestor(
-            nome="Valquíria Saes", email="saes.val@empresaa.br", id_empresa=id_empresa
-        ),
-        Gestor(nome="Carlos Gomide", email="gom.carlos@empresaa.br", id_empresa=None),
-    ]
+	UsuarioRepository.createUsuario(usuario, db)
+
+	result = GestorRepository.createGestor(gestor, db)
+
+	assert result.id_gestor == usuario.id
+	assert result.nome == gestor.nome
+	assert db.query(Gestor).count() == 1
 
 
-@pytest.mark.parametrize("gestor", make_gestores())
-def test_createGestor(gestor, add_empresa, db):
-    result = GestorRepository.createGestor(gestor, db)
+@pytest.mark.parametrize('usuario_gestor', make_gestores())
+def test_gestorExistsByEmail(usuario_gestor, add_empresa, db):
+	usuario, gestor = usuario_gestor
 
-    assert result.id_gestor is not None
-    assert result.nome == gestor.nome
-    assert db.query(Gestor).count() == 1
+	UsuarioRepository.createUsuario(usuario, db)
+	GestorRepository.createGestor(gestor, db)
 
+	result = GestorRepository.gestorExistsByEmail(gestor.email, db)
 
-@pytest.mark.parametrize("gestor", make_gestores())
-def test_gestorExistsByEmail(gestor, add_empresa, db):
-    GestorRepository.createGestor(gestor, db)
-    result = GestorRepository.gestorExistsByEmail(gestor.email, db)
-
-    assert result == True
-    assert db.query(Gestor).count() == 1
+	assert result is True
+	assert db.query(Gestor).count() == 1
 
 
-@pytest.mark.parametrize("gestor", make_gestores())
-def test_nonExistentGestor_gestorExistsByEmail(gestor, db):
-    result = GestorRepository.gestorExistsByEmail(gestor.email, db)
+@pytest.mark.parametrize('usuario_gestor', make_gestores())
+def test_nonExistentGestor_gestorExistsByEmail(usuario_gestor, db):
+	_, gestor = usuario_gestor
 
-    assert result == False
-    assert db.query(Gestor).count() == 0
+	result = GestorRepository.gestorExistsByEmail(gestor.email, db)
+
+	assert result is False
+	assert db.query(Gestor).count() == 0
 
 
-@pytest.mark.parametrize("gestor", make_gestores())
-def test_getGestorById(gestor, add_empresa, db):
-    created_gestor = GestorRepository.createGestor(gestor, db)
-    result = GestorRepository.getGestorById(created_gestor.id_gestor, db)
+@pytest.mark.parametrize('usuario_gestor', make_gestores())
+def test_getGestorById(usuario_gestor, add_empresa, db):
+	usuario, gestor = usuario_gestor
 
-    assert result.id_gestor == created_gestor.id_gestor
-    assert result.nome == created_gestor.nome
+	UsuarioRepository.createUsuario(usuario, db)
+
+	created = GestorRepository.createGestor(gestor, db)
+
+	result = GestorRepository.getGestorById(created.id_gestor, db)
+
+	assert result.id_gestor == created.id_gestor
+	assert result.nome == created.nome
 
 
 def test_nonExistentGestor_getGestorById(db):
-    result = GestorRepository.getGestorById(-1, db)
-
-    assert result == None
+	result = GestorRepository.getGestorById(-1, db)
+	assert result is None
 
 
 @pytest.mark.parametrize(
-    "novo_email", ["novo1@example.com", "novo2@example.com", "novo3@example.com"]
+	'novo_email', ['novo1@example.com', 'novo2@example.com', 'novo3@example.com']
 )
 def test_updateGestor(sample_gestor, novo_email, db):
-    GestorRepository.createGestor(sample_gestor, db)
-    sample_gestor.email = novo_email
-    result = GestorRepository.updateGestor(sample_gestor, db)
-    assert result.email == novo_email
+	usuario, gestor = sample_gestor
+
+	GestorRepository.createGestor(gestor, db)
+
+	GestorRepository.createGestor(gestor, db)
+
+	gestor.email = novo_email
+	result = GestorRepository.updateGestor(gestor, db)
+
+	assert result.email == novo_email
 
 
-@pytest.mark.parametrize("gestor", make_gestores())
-def test_deleteGestor(gestor, add_empresa, db):
-    created_gestor = GestorRepository.createGestor(gestor, db)
-    result = GestorRepository.deleteGestor(created_gestor, db)
+@pytest.mark.parametrize('usuario_gestor', make_gestores())
+def test_deleteGestor(usuario_gestor, add_empresa, db):
+	usuario, gestor = usuario_gestor
 
-    assert result == True
-    assert db.query(Gestor).count() == 0
+	GestorRepository.createGestor(gestor, db)
+
+	created = GestorRepository.createGestor(gestor, db)
+
+	result = GestorRepository.deleteGestor(created, db)
+
+	assert result is True
+	assert db.query(Gestor).count() == 0
 
 
-@pytest.mark.parametrize("gestor", make_gestores())
-def test_deleteGestor(gestor, db):
-    with pytest.raises(Exception):
-        GestorRepository.deleteGestor(gestor, db)
+@pytest.mark.parametrize('usuario_gestor', make_gestores())
+def test_nonExistentGestor_deleteGestor(usuario_gestor, db):
+	_, gestor = usuario_gestor
+
+	with pytest.raises(Exception):
+		GestorRepository.deleteGestor(gestor, db)

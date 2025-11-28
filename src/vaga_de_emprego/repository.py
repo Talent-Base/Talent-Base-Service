@@ -6,64 +6,80 @@ from ..models import VagaDeEmprego
 
 
 class VagaDeEmpregoRepository:
-    def getAllVagasDeEmprego(database: Session = Depends(getDatabase)):
-        return database.query(VagaDeEmprego).all()
+	def getAllVagasDeEmprego(database: Session = Depends(getDatabase)):
+		return database.query(VagaDeEmprego).all()
 
-    def getAllVagasDeEmpregoComEmpresas(database: Session = Depends(getDatabase)):
-        return (
-            database.query(VagaDeEmprego)
-            .options(joinedload(VagaDeEmprego.empresa))
-            .all()
-        )
+	def getAllVagasDeEmpregoComEmpresas(database: Session = Depends(getDatabase)):
+		return (
+			database.query(VagaDeEmprego)
+			.options(joinedload(VagaDeEmprego.empresa))
+			.all()
+		)
 
-    def getVagaDeEmpregoById(
-        id_vaga_de_emprego: int, database: Session = Depends(getDatabase)
-    ):
-        vaga_de_emprego = (
-            database.query(VagaDeEmprego)
-            .filter(id_vaga_de_emprego == id_vaga_de_emprego)
-            .first()
-        )
-        return vaga_de_emprego
+	def getVagaDeEmpregoById(
+		id_vaga_de_emprego: int, database: Session = Depends(getDatabase)
+	):
+		vaga_de_emprego = (
+			database.query(VagaDeEmprego)
+			.filter(id_vaga_de_emprego == id_vaga_de_emprego)
+			.first()
+		)
+		return vaga_de_emprego
 
-    def getVagaDeEmpregoWithEmpresaById(
-        id_vaga_de_emprego: int, database: Session = Depends(getDatabase)
-    ):
-        vaga_de_emprego = (
-            database.query(VagaDeEmprego)
-            .options(joinedload(VagaDeEmprego.empresa))
-            .filter(VagaDeEmprego.id_vaga_de_emprego == id_vaga_de_emprego)
-            .first()
-        )
-        return vaga_de_emprego
+	def getVagaDeEmpregoWithEmpresaById(
+		id_vaga_de_emprego: int, database: Session = Depends(getDatabase)
+	):
+		vaga_de_emprego = (
+			database.query(VagaDeEmprego)
+			.options(joinedload(VagaDeEmprego.empresa))
+			.filter(VagaDeEmprego.id_vaga_de_emprego == id_vaga_de_emprego)
+			.first()
+		)
+		return vaga_de_emprego
 
-    def getVagaDeEmpregoByEmpresaId(
-        id_empresa: int, database: Session = Depends(getDatabase)
-    ):
-        vaga_de_emprego = (
-            database.query(VagaDeEmprego)
-            .filter(VagaDeEmprego.id_empresa == id_empresa)
-            .all()
-        )
-        return vaga_de_emprego
+	# def getVagaDeEmpregoByEmpresaId(
+	#     id_empresa: int, database: Session = Depends(getDatabase), limit: int = None
+	# ):
+	#     vaga_de_emprego = (
+	#         database.query(VagaDeEmprego)
+	#         .filter(VagaDeEmprego.id_empresa == id_empresa)
+	#         .all()
+	#     )
+	#     return vaga_de_emprego
 
-    def createVagaDeEmprego(
-        new_vaga_de_emprego: VagaDeEmprego, database: Session = Depends(getDatabase)
-    ):
-        database.add(new_vaga_de_emprego)
-        database.commit()
-        return new_vaga_de_emprego
+	def getVagaDeEmpregoByEmpresaId(
+		id_empresa: int, database: Session, limit: int = None
+	):
+		query = database.query(VagaDeEmprego).filter(
+			VagaDeEmprego.id_empresa == id_empresa
+		)
 
-    def deleteVagaDeEmprego(
-        vaga_de_emprego: VagaDeEmprego, database: Session = Depends(getDatabase)
-    ):
-        database.delete(vaga_de_emprego)
-        database.commit()
-        return True
+		# Aplica o limite, se fornecido
+		if limit:
+			query = query.limit(limit)
 
-    def updateVagaDeEmprego(
-        vaga_de_emprego: VagaDeEmprego, database: Session = Depends(getDatabase)
-    ):
-        database.merge(vaga_de_emprego)
-        database.commit()
-        return vaga_de_emprego
+		# Retorna as vagas de emprego com o limite (ou todas as vagas se limit for None)
+		vaga_de_emprego = query.all()
+
+		return vaga_de_emprego
+
+	def createVagaDeEmprego(
+		new_vaga_de_emprego: VagaDeEmprego, database: Session = Depends(getDatabase)
+	):
+		database.add(new_vaga_de_emprego)
+		database.commit()
+		return new_vaga_de_emprego
+
+	def deleteVagaDeEmprego(
+		vaga_de_emprego: VagaDeEmprego, database: Session = Depends(getDatabase)
+	):
+		database.delete(vaga_de_emprego)
+		database.commit()
+		return True
+
+	def updateVagaDeEmprego(
+		vaga_de_emprego: VagaDeEmprego, database: Session = Depends(getDatabase)
+	):
+		database.merge(vaga_de_emprego)
+		database.commit()
+		return vaga_de_emprego

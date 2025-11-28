@@ -15,3 +15,4 @@ __pycache__/
 dist/
 build/
 .pytest_cache/
+test_admin_integration.db

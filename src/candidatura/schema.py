@@ -8,32 +8,32 @@ from src.vaga_de_emprego.schema import VagaDeEmpregoBase
 
 
 class Status(str, Enum):
-    PENDENTE = "Pendente"
-    ANALISE = "Em análise"
-    ACEITO = "Aceito"
-    REJEITADO = "Rejeitado"
+	PENDENTE = 'Pendente'
+	ANALISE = 'Em análise'
+	ACEITO = 'Aceito'
+	REJEITADO = 'Rejeitado'
 
 
 class CandidaturaBase(BaseModel):
-    id_candidato: int
-    id_vaga_de_emprego: int
-    status: Status = Field(default="Pendente")
-    data: datetime
-    data_atualizacao: Optional[datetime] = None
+	id_candidato: int
+	id_vaga_de_emprego: int
+	status: Status = Field(default='Pendente')
+	data: datetime
+	data_atualizacao: Optional[datetime] = None
 
-    model_config = {"from_attributes": True}
+	model_config = {'from_attributes': True}
 
 
 class CandidaturaUpdate(BaseModel):
-    status: Status
-    data_atualizacao: datetime
+	status: Status
+	data_atualizacao: datetime
 
 
 class CandidaturaResponse(CandidaturaBase):
-    id_candidatura: int
+	id_candidatura: int
 
 
 class CandidaturaWithVagaResponse(CandidaturaResponse):
-    vaga_de_emprego: VagaDeEmpregoBase
+	vaga_de_emprego: VagaDeEmpregoBase
 
-    model_config = {"from_attributes": True}
+	model_config = {'from_attributes': True}

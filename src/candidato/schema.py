@@ -3,13 +3,15 @@ from pydantic import BaseModel
 
 
 class CandidatoBase(BaseModel):
-    nome: str
-    email: str
-    estado: Optional[str] = None
-    cidade: Optional[str] = None
-    resumo: Optional[str] = None
-    situacao_empregaticia: Optional[str] = None
+	id_candidato: int
+	nome: str
+	email: str
+	titulo_profissional: Optional[str] = None
+	estado: Optional[str] = None
+	cidade: Optional[str] = None
+	resumo: Optional[str] = None
+	situacao_empregaticia: Optional[str] = None
 
 
 class CandidatoResponse(CandidatoBase):
-    id: int
+	id_candidato: int
